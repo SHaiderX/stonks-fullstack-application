@@ -1,7 +1,11 @@
 "use client";
-import { ReactNode, useState, useEffect, useRef } from 'react';
+import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import useAuth from '../hooks/useAuth';
+import SignInModal from '../components/auth/SignInModal';
+import SignUpModal from '../components/auth/SignUpModal';
+import { supabase } from '../lib/supabaseClient';
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,9 +13,10 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const [search, setSearch] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const modalRef = useRef<HTMLDivElement>(null);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
+  const [isSignUpModalOpen, setIsSignUpModalOpen] = useState<boolean>(false);
+  const isLoggedIn = useAuth();
   const router = useRouter();
 
   const recommendedChannels = [
@@ -20,13 +25,9 @@ const Layout = ({ children }: LayoutProps) => {
     { id: 3, name: 'Channel 3', username: 'channel3' },
   ];
 
-  const handleSignOut = () => {
-    setIsLoggedIn(false);
-    setIsModalOpen(false);
-  };
-
-  const handleLoginSignup = () => {
-    setIsLoggedIn(true);
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
   };
 
   const handleSettings = () => {
@@ -34,17 +35,13 @@ const Layout = ({ children }: LayoutProps) => {
     setIsModalOpen(false);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        setIsModalOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  const handleLogin = () => {
+    setIsSignInModalOpen(true);
+  };
+
+  const handleSignUp = () => {
+    setIsSignUpModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col h-screen">
@@ -65,25 +62,27 @@ const Layout = ({ children }: LayoutProps) => {
           />
         </div>
         <div className="flex items-center">
-          {!isLoggedIn ? (
+          {isLoggedIn === null ? (
+            <div className="w-20" /> // Placeholder div with fixed width to prevent shifting
+          ) : isLoggedIn ? (
+            <button onClick={() => setIsModalOpen(!isModalOpen)} className="w-10 h-10 bg-gray-500 rounded-full">
+              {/* Profile pic empty for now */}
+            </button>
+          ) : (
             <>
               <button
-                onClick={handleLoginSignup}
+                onClick={handleLogin}
                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2"
               >
                 Login
               </button>
               <button
-                onClick={handleLoginSignup}
+                onClick={handleSignUp}
                 className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
               >
                 Sign Up
               </button>
             </>
-          ) : (
-            <button onClick={() => setIsModalOpen(!isModalOpen)} className="w-10 h-10 bg-gray-500 rounded-full">
-              {/* Profile pic empty for now */}
-            </button>
           )}
         </div>
       </div>
@@ -112,7 +111,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Profile Modal */}
       {isModalOpen && (
-        <div ref={modalRef} className="absolute top-16 right-4 z-20 bg-white p-4 rounded shadow-lg">
+        <div className="absolute top-16 right-4 z-20 bg-white p-4 rounded shadow-lg">
           <button
             onClick={handleSignOut}
             className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 mb-2 w-full"
@@ -127,6 +126,12 @@ const Layout = ({ children }: LayoutProps) => {
           </button>
         </div>
       )}
+
+      {/* Sign-In Modal */}
+      {isSignInModalOpen && <SignInModal closeModal={() => setIsSignInModalOpen(false)} />}
+
+      {/* Sign-Up Modal */}
+      {isSignUpModalOpen && <SignUpModal closeModal={() => setIsSignUpModalOpen(false)} />}
     </div>
   );
 };
