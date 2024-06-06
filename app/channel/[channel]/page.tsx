@@ -1,17 +1,15 @@
 "use client";
 import { useState, useEffect, ChangeEvent, KeyboardEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import Layout from '../../../components/layout';
 import { useParams } from 'next/navigation';
+import Layout from '../../../components/layout';
 
 const ChannelPage = () => {
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<string[]>([]);
-  const router = useRouter();
   const { channel } = useParams();
 
   useEffect(() => {
-    //TODO
+    //TODO: Fetch channel data
   }, [channel]);
 
   const toggleStreaming = () => {
@@ -19,7 +17,7 @@ const ChannelPage = () => {
   };
 
   const handleFollow = () => {
-    //TODO
+    //TODO: Follow channel
   };
 
   const handleChatMessage = (e: KeyboardEvent<HTMLInputElement>) => {
