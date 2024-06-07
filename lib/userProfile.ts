@@ -4,7 +4,7 @@ import { supabase } from './supabaseClient';
 export const followUser = async (currentUserEmail: string, targetUserEmail: string) => {
   // Fetch current user profile
   const { data: currentUserProfile, error: currentUserError } = await supabase
-    .from('profiles')
+    .from('Users')
     .select('*')
     .eq('email', currentUserEmail)
     .single();
@@ -16,19 +16,22 @@ export const followUser = async (currentUserEmail: string, targetUserEmail: stri
 
   // Fetch target user profile
   const { data: targetUserProfile, error: targetUserError } = await supabase
-    .from('profiles')
+    .from('Users')
     .select('*')
     .eq('email', targetUserEmail)
     .single();
 
+  // Initialize following list if it doesn't exist
+  const currentUserFollowing = currentUserProfile.following ? JSON.parse(currentUserProfile.following) : [];
+
   if (targetUserError) {
     console.error(targetUserError);
     // Update only the following list of the current user
-    const updatedFollowingList = [...currentUserProfile.following, targetUserEmail];
+    const updatedFollowingList = [...currentUserFollowing, targetUserEmail];
 
     const { error: updateFollowingError } = await supabase
-      .from('profiles')
-      .update({ following: updatedFollowingList })
+      .from('Users')
+      .update({ following: JSON.stringify(updatedFollowingList) })
       .eq('email', currentUserEmail);
 
     if (updateFollowingError) {
@@ -39,13 +42,27 @@ export const followUser = async (currentUserEmail: string, targetUserEmail: stri
     return { success: true, message: 'Target user not found. Only updated the following list.' };
   }
 
-  // Update both following and followers lists
-  const updatedFollowingList = [...currentUserProfile.following, targetUserEmail];
-  const updatedFollowersList = [...targetUserProfile.followers, currentUserEmail];
+  // Initialize followers list if it doesn't exist
+  const targetUserFollowers = targetUserProfile.followers ? JSON.parse(targetUserProfile.followers) : [];
+
+  const isAlreadyFollowing = currentUserFollowing.includes(targetUserEmail);
+
+  let updatedFollowingList;
+  let updatedFollowersList;
+
+  if (isAlreadyFollowing) {
+    // Unfollow user
+    updatedFollowingList = currentUserFollowing.filter((email: string) => email !== targetUserEmail);
+    updatedFollowersList = targetUserFollowers.filter((email: string) => email !== currentUserEmail);
+  } else {
+    // Follow user
+    updatedFollowingList = [...currentUserFollowing, targetUserEmail];
+    updatedFollowersList = [...targetUserFollowers, currentUserEmail];
+  }
 
   const { error: updateFollowingError } = await supabase
-    .from('profiles')
-    .update({ following: updatedFollowingList })
+    .from('Users')
+    .update({ following: JSON.stringify(updatedFollowingList) })
     .eq('email', currentUserEmail);
 
   if (updateFollowingError) {
@@ -54,8 +71,8 @@ export const followUser = async (currentUserEmail: string, targetUserEmail: stri
   }
 
   const { error: updateFollowersError } = await supabase
-    .from('profiles')
-    .update({ followers: updatedFollowersList })
+    .from('Users')
+    .update({ followers: JSON.stringify(updatedFollowersList) })
     .eq('email', targetUserEmail);
 
   if (updateFollowersError) {
@@ -63,5 +80,5 @@ export const followUser = async (currentUserEmail: string, targetUserEmail: stri
     return { error: updateFollowersError.message };
   }
 
-  return { success: true };
+  return { success: true, message: isAlreadyFollowing ? 'Unfollowed successfully.' : 'Followed successfully.' };
 };
