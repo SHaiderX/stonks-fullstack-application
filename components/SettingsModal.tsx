@@ -11,29 +11,43 @@ interface SettingsModalProps {
 const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => {
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [popupNotifications, setPopupNotifications] = useState(false);
+  const [streamUrl, setStreamUrl] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from('Users')
-        .select('notification_pref')
+        .select('notification_pref, stream_url')
         .eq('email', currentUserEmail)
         .single();
 
       if (error) {
         console.error(error);
         setErrorMessage('Failed to fetch settings.');
-      } else if (data?.notification_pref) {
+      } else if (data) {
         setEmailNotifications(data.notification_pref.email);
         setPopupNotifications(data.notification_pref.popup);
+        setStreamUrl(data.stream_url || '');
       }
     };
 
     fetchSettings();
   }, [currentUserEmail]);
 
+  const validateYouTubeUrl = (url: string) => {
+    const regex = /^(https:\/\/www\.youtube\.com\/watch\?v=)[a-zA-Z0-9_-]+$/;
+    return regex.test(url);
+  };
+
   const handleSave = async () => {
+    if (streamUrl && !validateYouTubeUrl(streamUrl)) {
+      setErrorMessage('Invalid URL format. The URL must be in the format "https://www.youtube.com/watch?v=[ID]".');
+      return;
+    }
+
+    const embedUrl = streamUrl.replace('watch?v=', 'embed/');
+
     const { error } = await supabase
       .from('Users')
       .update({
@@ -41,6 +55,7 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
           email: emailNotifications,
           popup: popupNotifications,
         },
+        stream_url: embedUrl,
       })
       .eq('email', currentUserEmail);
 
@@ -78,6 +93,16 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
             />
             <span className="ml-2 text-white">Popup Notifications</span>
           </label>
+        </div>
+        <div className="mb-4">
+          <label className="block text-white mb-2">Change Stream URL</label>
+          <input
+            type="text"
+            className="w-full p-2 rounded bg-gray-700 text-white"
+            value={streamUrl}
+            onChange={(e) => setStreamUrl(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=jfKfPfyJRdk"
+          />
         </div>
         <button onClick={handleSave} className="px-4 py-2 bg-blue-500 text-white rounded">
           Save
