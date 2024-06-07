@@ -49,28 +49,61 @@ const HomePage = () => {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-        {activeChannels.map((channel) => (
-          <Link key={channel.id} href={`/channel/${channel.username}`}>
-            <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg cursor-pointer">
-              <img src={channel.thumbnail} alt={channel.username} className="w-full h-48 object-cover" />
-              <div className="p-4 flex items-center">
-                <img
-                  src={channel.profile_pic || 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png'}
-                  alt={channel.username}
-                  className="w-8 h-8 rounded-full mr-4"
-                />
-                <h3 className="font-bold text-white flex-grow">{channel.username}</h3>
-                <span className="text-red-500 flex items-center">
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <circle cx="10" cy="10" r="10" />
-                  </svg>
-                  Live
-                </span>
+      <div className="max-w-4xl mx-auto p-4">
+        <h2 className="text-white text-2xl font-bold mb-4">Currently Live</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {activeChannels.map((channel) => (
+            <Link key={channel.id} href={`/channel/${channel.username}`}>
+              <div
+                style={{
+                  backgroundColor: '#0B0E0F',
+                  overflow: 'hidden',
+                  boxShadow: '4px 4px 6px -1px rgba(249, 198, 17, 0.7)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.1s, box-shadow 0.1s',
+                  marginTop: '0.5rem',
+                }}
+                onMouseOver={(e) => {
+                  (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)';
+                  (e.currentTarget as HTMLElement).style.boxShadow =
+                    '6px 6px 15px -3px rgba(249, 198, 17, 0.7), 4px 4px 6px -2px rgba(249, 198, 17, 0.7)';
+                }}
+                onMouseOut={(e) => {
+                  (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                  (e.currentTarget as HTMLElement).style.boxShadow =
+                    '4px 4px 6px -1px rgba(249, 198, 17, 0.7)';
+                }}
+              >
+                <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>
+                  <img
+                    src={channel.thumbnail}
+                    alt={channel.username}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                    }}
+                  />
+                </div>
+                <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', backgroundColor: '#111' }}>
+                  <img
+                    src={channel.profile_pic || 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png'}
+                    alt={channel.username}
+                    style={{ width: '2rem', height: '2rem', borderRadius: '50%', marginRight: '1rem' }}
+                  />
+                  <h3 style={{ fontWeight: 'bold', color: 'white', flexGrow: 1 }}>{channel.username}</h3>
+                  <span style={{ color: 'red', display: 'flex', alignItems: 'center' }}>
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <circle cx="10" cy="10" r="10" />
+                    </svg>
+                    Live
+                  </span>
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          ))}
+        </div>
       </div>
     </Layout>
   );

@@ -54,8 +54,8 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-20 bg-black bg-opacity-50">
-      <div className="bg-white p-8 rounded shadow-md text-black">
-        <h1 className="text-2xl mb-4">Notification Settings</h1>
+      <div className="bg-gray-900 p-8 rounded shadow-md text-black">
+        <h1 className="text-2xl text-white mb-4">Notification Settings</h1>
         {errorMessage && <p className="mb-4 text-red-500">{errorMessage}</p>}
         <div className="mb-2">
           <label className="inline-flex items-center">
@@ -65,7 +65,7 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
               checked={emailNotifications}
               onChange={(e) => setEmailNotifications(e.target.checked)}
             />
-            <span className="ml-2">Email Notifications</span>
+            <span className="ml-2 text-white">Email Notifications</span>
           </label>
         </div>
         <div className="mb-4">
@@ -76,7 +76,7 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
               checked={popupNotifications}
               onChange={(e) => setPopupNotifications(e.target.checked)}
             />
-            <span className="ml-2">Popup Notifications</span>
+            <span className="ml-2 text-white">Popup Notifications</span>
           </label>
         </div>
         <button onClick={handleSave} className="px-4 py-2 bg-blue-500 text-white rounded">
