@@ -27,6 +27,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    setIsModalOpen(false); // Ensure the profile modal closes on sign out
     router.push('/');
   };
 

@@ -1,3 +1,4 @@
+// components/auth/SignUpModal.tsx
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -22,11 +23,17 @@ const SignUpModal = ({ closeModal }: SignUpModalProps) => {
     }
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) {
-      console.error('Signup error:', error);
       setErrorMessage(error.message);
     } else {
       closeModal();
-      router.push('/signin');
+      router.push('/');
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    if (error) {
+      setErrorMessage(error.message);
     }
   };
 
@@ -62,8 +69,11 @@ const SignUpModal = ({ closeModal }: SignUpModalProps) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button onClick={handleSignUp} className="px-4 py-2 bg-green-500 text-white rounded">
+        <button onClick={handleSignUp} className="px-4 py-2 bg-green-500 text-white rounded mb-2">
           Sign Up
+        </button>
+        <button onClick={handleGoogleSignUp} className="px-4 py-2 bg-red-500 text-white rounded">
+          Sign Up with Google
         </button>
       </div>
     </div>
