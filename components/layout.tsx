@@ -1,10 +1,11 @@
 "use client";
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import useAuth from '../hooks/useAuth';
 import SignInModal from '../components/auth/SignInModal';
 import SignUpModal from '../components/auth/SignUpModal';
+import ProfileCompletionModal from '../components/auth/ProfileCompletionModal';
 import { supabase } from '../lib/supabaseClient';
 
 interface LayoutProps {
@@ -16,6 +17,9 @@ const Layout = ({ children }: LayoutProps) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState<boolean>(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [profilePicUrl, setProfilePicUrl] = useState<string>('');
   const isLoggedIn = useAuth();
   const router = useRouter();
 
@@ -25,9 +29,36 @@ const Layout = ({ children }: LayoutProps) => {
     { id: 3, name: 'Channel 3', username: 'channel3' },
   ];
 
+  useEffect(() => {
+    const checkUserProfile = async () => {
+      const { data: userResponse } = await supabase.auth.getUser();
+
+      if (userResponse?.user?.email) {
+        setCurrentUserEmail(userResponse.user.email);
+
+        const { data, error } = await supabase
+          .from('Users')
+          .select('profile_pic')
+          .eq('email', userResponse.user.email)
+          .single();
+
+        if (error) {
+          console.error(error);
+          setIsProfileModalOpen(true);
+        } else {
+          setProfilePicUrl(data?.profile_pic || 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png');
+        }
+      }
+    };
+
+    if (isLoggedIn) {
+      checkUserProfile();
+    }
+  }, [isLoggedIn]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    setIsModalOpen(false); // Ensure the profile modal closes on sign out
+    setIsModalOpen(false);
     router.push('/');
   };
 
@@ -66,8 +97,8 @@ const Layout = ({ children }: LayoutProps) => {
           {isLoggedIn === null ? (
             <div className="w-20" /> // Placeholder div with fixed width to prevent shifting
           ) : isLoggedIn ? (
-            <button onClick={() => setIsModalOpen(!isModalOpen)} className="w-10 h-10 bg-gray-500 rounded-full">
-              {/* Profile pic empty for now */}
+            <button onClick={() => setIsModalOpen(!isModalOpen)} className="w-10 h-10 rounded-full">
+              <img src={profilePicUrl} alt="Profile" className="w-full h-full object-cover rounded-full" />
             </button>
           ) : (
             <>
@@ -133,6 +164,14 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Sign-Up Modal */}
       {isSignUpModalOpen && <SignUpModal closeModal={() => setIsSignUpModalOpen(false)} />}
+
+      {/* Profile Completion Modal */}
+      {isProfileModalOpen && currentUserEmail && (
+        <ProfileCompletionModal
+          closeModal={() => setIsProfileModalOpen(false)}
+          currentUserEmail={currentUserEmail}
+        />
+      )}
     </div>
   );
 };
