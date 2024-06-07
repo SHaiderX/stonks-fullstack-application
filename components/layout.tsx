@@ -101,7 +101,7 @@ const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-gray-900 text-white">
       {/* Topbar */}
       <div className="bg-gray-900 text-white p-4 fixed w-full z-10 flex justify-between items-center">
         <div className="flex items-center">
@@ -161,7 +161,7 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
 
         {/* Main Area */}
-        <div className="flex-1 flex flex-col p-4 bg-gray-100 overflow-y-auto">
+        <div className="flex-1 flex flex-col p-4 bg-gray-700 overflow-y-auto">
           {children}
         </div>
       </div>

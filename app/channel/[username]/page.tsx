@@ -104,7 +104,7 @@ const ChannelPage = () => {
 
   return (
     <Layout>
-      <div className="flex h-full bg-gray-900 text-white">
+      <div className="flex h-full text-white">
         <div className="flex-1 flex flex-col items-center justify-center">
           {channelData?.username === "doesn't exist" ? (
             <div className="flex items-center mt-4">
@@ -164,7 +164,7 @@ const ChannelPage = () => {
           )}
         </div>
         {channelData?.username !== "doesn't exist" && (
-          <div className="w-1/4 bg-gray-800 p-4 border-l h-full flex flex-col">
+          <div className="w-1/4 bg-gray-800 p-4 h-full flex flex-col">
             <h3 className="text-xl font-bold mb-4">Chat</h3>
             <div className="flex-1 overflow-y-auto mb-2 custom-scrollbar" style={{ maxHeight: '70vh' }}>
               {chatMessages.map((msg, idx) => (
