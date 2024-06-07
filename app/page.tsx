@@ -58,7 +58,7 @@ const HomePage = () => {
                 style={{
                   backgroundColor: '#0B0E0F',
                   overflow: 'hidden',
-                  boxShadow: '4px 4px 6px -1px rgba(249, 198, 17, 0.7)',
+                  boxShadow: '4px 4px 6px -1px #7B28AC',
                   cursor: 'pointer',
                   transition: 'transform 0.1s, box-shadow 0.1s',
                   marginTop: '0.5rem',
@@ -66,12 +66,12 @@ const HomePage = () => {
                 onMouseOver={(e) => {
                   (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)';
                   (e.currentTarget as HTMLElement).style.boxShadow =
-                    '6px 6px 15px -3px rgba(249, 198, 17, 0.7), 4px 4px 6px -2px rgba(249, 198, 17, 0.7)';
+                    '6px 6px 15px -3px #7B28AC, 4px 4px 6px -2px #7B28AC';
                 }}
                 onMouseOut={(e) => {
                   (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
                   (e.currentTarget as HTMLElement).style.boxShadow =
-                    '4px 4px 6px -1px rgba(249, 198, 17, 0.7)';
+                    '4px 4px 6px -1px #7B28AC';
                 }}
               >
                 <div style={{ width: '100%', aspectRatio: '16/9', overflow: 'hidden' }}>

@@ -187,13 +187,13 @@ useEffect(() => {
           <>
             <button
               onClick={handleLogin}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mr-2"
+              className="px-4 py-2 bg-[#9E2150] text-white rounded hover:bg-[#6E1838] mr-2"
             >
               Login
             </button>
             <button
               onClick={handleSignUp}
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              className="px-4 py-2 bg-[#4120AC] text-white rounded hover:bg-[#2A1470]"
             >
               Sign Up
             </button>

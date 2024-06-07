@@ -52,24 +52,24 @@ const SignUpModal = ({ closeModal }: SignUpModalProps) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-20 bg-black bg-opacity-50">
-      <div ref={modalRef} className="bg-white p-8 rounded shadow-md text-black">
+      <div ref={modalRef} className="bg-gray-900 p-8 rounded shadow-md text-white">
         <h1 className="text-2xl mb-4">Sign Up</h1>
         {errorMessage && <p className="mb-4 text-red-500">{errorMessage}</p>}
         <input
           type="email"
           placeholder="Email"
-          className="mb-2 p-2 border rounded w-full text-black"
+          className="mb-2 p-2 border rounded w-full text-white bg-gray-800"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
           placeholder="Password"
-          className="mb-4 p-2 border rounded w-full text-black"
+          className="mb-4 p-2 border rounded w-full text-white bg-gray-800"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button onClick={handleSignUp} className="px-4 py-2 bg-green-500 text-white rounded mb-2">
+        <button onClick={handleSignUp} className="px-4 py-2 bg-green-500 text-white rounded mb-2 mr-3">
           Sign Up
         </button>
         <button onClick={handleGoogleSignUp} className="px-4 py-2 bg-red-500 text-white rounded">
