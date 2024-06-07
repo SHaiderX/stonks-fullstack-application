@@ -6,6 +6,7 @@ import useAuth from '../hooks/useAuth';
 import SignInModal from '../components/auth/SignInModal';
 import SignUpModal from '../components/auth/SignUpModal';
 import ProfileCompletionModal from '../components/auth/ProfileCompletionModal';
+import SettingsModal from '../components/SettingsModal';
 import { supabase } from '../lib/supabaseClient';
 
 interface LayoutProps {
@@ -18,6 +19,7 @@ const Layout = ({ children }: LayoutProps) => {
   const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState<boolean>(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [profilePicUrl, setProfilePicUrl] = useState<string>('');
   const isLoggedIn = useAuth();
@@ -63,7 +65,7 @@ const Layout = ({ children }: LayoutProps) => {
   };
 
   const handleSettings = () => {
-    router.push('/settings');
+    setIsSettingsModalOpen(true);
     setIsModalOpen(false);
   };
 
@@ -164,6 +166,14 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Sign-Up Modal */}
       {isSignUpModalOpen && <SignUpModal closeModal={() => setIsSignUpModalOpen(false)} />}
+
+      {/* Settings Modal */}
+      {isSettingsModalOpen && currentUserEmail && (
+        <SettingsModal
+          closeModal={() => setIsSettingsModalOpen(false)}
+          currentUserEmail={currentUserEmail}
+        />
+      )}
 
       {/* Profile Completion Modal */}
       {isProfileModalOpen && currentUserEmail && (
