@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import useAuth from '../hooks/useAuth';
@@ -21,9 +21,11 @@ const Layout = ({ children }: LayoutProps) => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [currentUserUsername, setCurrentUserUsername] = useState<string | null>(null);
   const [profilePicUrl, setProfilePicUrl] = useState<string>('');
   const isLoggedIn = useAuth();
   const router = useRouter();
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const recommendedChannels = [
     { id: 1, name: 'Channel 1', username: 'channel1' },
@@ -40,7 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
 
         const { data, error } = await supabase
           .from('Users')
-          .select('profile_pic')
+          .select('profile_pic, username')
           .eq('email', userResponse.user.email)
           .single();
 
@@ -49,6 +51,7 @@ const Layout = ({ children }: LayoutProps) => {
           setIsProfileModalOpen(true);
         } else {
           setProfilePicUrl(data?.profile_pic || 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png');
+          setCurrentUserUsername(data?.username || '');
         }
       }
     };
@@ -77,13 +80,33 @@ const Layout = ({ children }: LayoutProps) => {
     setIsSignUpModalOpen(true);
   };
 
+  const handleProfile = () => {
+    if (currentUserUsername) {
+      router.push(`/channel/${currentUserUsername}`);
+      setIsModalOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setIsModalOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="flex flex-col h-screen">
       {/* Topbar */}
       <div className="bg-gray-900 text-white p-4 fixed w-full z-10 flex justify-between items-center">
         <div className="flex items-center">
           <button onClick={() => router.push('/')} className="text-xl font-bold">
-            Logo
+            <img src="/stonks.png" alt="Logo" className="h-8 w-auto" />
           </button>
         </div>
         <div className="flex items-center flex-grow justify-center">
@@ -145,7 +168,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Profile Modal */}
       {isModalOpen && (
-        <div className="absolute top-16 right-4 z-20 bg-white p-4 rounded shadow-lg">
+        <div ref={modalRef} className="absolute top-16 right-4 z-20 bg-white p-4 rounded shadow-lg">
           <button
             onClick={handleSignOut}
             className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 mb-2 w-full"
@@ -157,6 +180,12 @@ const Layout = ({ children }: LayoutProps) => {
             className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 w-full"
           >
             Settings
+          </button>
+          <button
+            onClick={handleProfile}
+            className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 w-full mt-2"
+          >
+            My Profile
           </button>
         </div>
       )}
