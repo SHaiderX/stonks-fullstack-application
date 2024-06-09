@@ -26,6 +26,10 @@ const ChannelPage = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
   const [isEmotesPopupOpen, setIsEmotesPopupOpen] = useState<boolean>(false);
+  const [isAddEmoteModalOpen, setIsAddEmoteModalOpen] = useState<boolean>(false);
+  const [newEmoteUrl, setNewEmoteUrl] = useState<string>('');
+  const [newEmoteName, setNewEmoteName] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [emotes, setEmotes] = useState<Emote[]>([]);
   const emoteButtonRef = useRef<HTMLButtonElement>(null); // Ref for the emote button
   const params = useParams();
@@ -104,7 +108,6 @@ const ChannelPage = () => {
       return;
     }
 
-
     if (newIsStreaming) {
       if (updatedUserData.followers) {
         let followersList = typeof updatedUserData.followers === 'string' ? JSON.parse(updatedUserData.followers) : updatedUserData.followers;
@@ -167,6 +170,38 @@ const ChannelPage = () => {
   const handleEmoteClick = (emote: Emote) => {
     setChatMessages([...chatMessages, { user: currentUser?.username || 'Unknown', message: emote.url, isEmote: true }]);
     setIsEmotesPopupOpen(false);
+  };
+
+  const validateImageUrl = (url: string): boolean => {
+    const urlPattern = new RegExp('https?://.*\\.(?:png|jpg|jpeg|gif|bmp|webp)$', 'i');
+    return urlPattern.test(url);
+  };
+
+  const handleAddEmote = async () => {
+    if (!validateImageUrl(newEmoteUrl)) {
+      setErrorMessage('Please provide a valid image URL.');
+      return;
+    }
+
+    const newEmote: Emote = { name: newEmoteName, url: newEmoteUrl };
+    const updatedEmotes = [...emotes, newEmote];
+
+    const { error } = await supabase
+      .from('Users')
+      .update({ emotes: updatedEmotes })
+      .eq('email', currentUser?.email);
+
+    if (error) {
+      console.error('Failed to add new emote:', error);
+      setErrorMessage('Failed to add new emote.');
+      return;
+    }
+
+    setEmotes(updatedEmotes);
+    setIsAddEmoteModalOpen(false);
+    setNewEmoteUrl('');
+    setNewEmoteName('');
+    setErrorMessage(null);
   };
 
   const isSelf = currentUser && currentUser.username.toLowerCase() === username.toLowerCase();
@@ -290,6 +325,15 @@ const ChannelPage = () => {
                       ))}
                     </div>
                   )}
+                  
+                  {isSelf && (
+                  <button
+                    className="mt-2 text-blue-500"
+                    onClick={() => setIsAddEmoteModalOpen(true)}
+                  >
+                    + Add Emote
+                  </button>
+                  )}
                 </div>
               )}
             </div>
@@ -297,6 +341,36 @@ const ChannelPage = () => {
         )}
       </div>
       {isSignInModalOpen && <SignInModal closeModal={() => setIsSignInModalOpen(false)} />}
+      {isAddEmoteModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-20 bg-black bg-opacity-50">
+          <div className="bg-white p-8 rounded shadow-md text-black">
+            <h1 className="text-2xl mb-4">Add New Emote</h1>
+            {errorMessage && <p className="mb-4 text-red-500">{errorMessage}</p>}
+            <input
+              type="text"
+              placeholder="Emote Name"
+              className="mb-2 p-2 border rounded w-full"
+              value={newEmoteName}
+              onChange={(e) => setNewEmoteName(e.target.value)}
+              required
+            />
+            <input
+              type="text"
+              placeholder="Emote URL"
+              className="mb-2 p-2 border rounded w-full"
+              value={newEmoteUrl}
+              onChange={(e) => setNewEmoteUrl(e.target.value)}
+              required
+            />
+            <button onClick={handleAddEmote} className="px-4 py-2 bg-blue-500 text-white rounded">
+              Add Emote
+            </button>
+            <button onClick={() => setIsAddEmoteModalOpen(false)} className="px-4 py-2 bg-gray-300 text-black rounded ml-2">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
