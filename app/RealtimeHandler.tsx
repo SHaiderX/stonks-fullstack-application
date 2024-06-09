@@ -43,7 +43,6 @@ const RealtimeHandler = () => {
       .eq('id', notificationId);
   };
 
-
   // Effect to handle visibility changes of the document
   useEffect(() => {
     const handleVisibilityChange = () => {

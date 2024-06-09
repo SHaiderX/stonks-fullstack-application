@@ -102,23 +102,35 @@ const ChannelPage = () => {
           try {
             const { data: followerData, error } = await supabase
               .from('Users')
-              .select('email, is_online')
+              .select('email, is_online, notification_pref')
               .eq('email', followerEmail)
               .single();
-
             if (error) continue;
 
-            const { data, error: insertError } = await supabase
-              .from('notifications')
-              .insert([
-                {
-                  streamer: currentUser.username,
-                  user: followerData.email,
-                  sent: false,
-                },
-              ]);
+            if (followerData.is_online && followerData.notification_pref.popup) { //If online and has allows popups, send push notification
+              const { data, error: insertError } = await supabase
+                .from('notifications')
+                .insert([
+                  {
+                    streamer: currentUser.username,
+                    user: followerData.email,
+                    sent: false,
+                  },
+                ]);
 
-            if (insertError) console.error(`Error inserting notification: ${insertError.message}`);
+              if (insertError) console.error(`Error inserting notification: ${insertError.message}`);
+            } else if (!followerData.is_online && followerData.notification_pref.email) { //If offline and allows email notifications, send email
+              console.log(`User ${currentUser.email} is live, sending email to follower ${followerData.email}`);
+              fetch('/api/sendEmail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  email: followerData.email,
+                  subject: `${currentUser.username} is live!`,
+                  message: `${currentUser.username} is now live. Check it out!`,
+                }),
+              });
+            }
           } catch (err) {
             console.error(`Error processing follower ${followerEmail}:`, err);
           }

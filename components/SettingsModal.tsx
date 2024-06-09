@@ -36,7 +36,7 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
   }, [currentUserEmail]);
 
   const validateYouTubeUrl = (url: string) => {
-    const regex = /^(https:\/\/www\.youtube\.com\/watch\?v=)[a-zA-Z0-9_-]+$/;
+    const regex = /^(https:\/\/www\.youtube\.com\/(watch\?v=|embed\/))[a-zA-Z0-9_-]+$/;
     return regex.test(url);
   };
 
