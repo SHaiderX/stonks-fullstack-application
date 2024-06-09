@@ -229,7 +229,7 @@ const ChannelPage = () => {
         <div className="flex-1 flex flex-col items-center justify-center">
           {channelData?.username === "doesn't exist" ? (
             <div className="flex items-center mt-4">
-              <h1 className="text-2xl font-bold">User doesn't exist</h1>
+              <h1 className="text-2xl font-bold">User doesnt exist</h1>
             </div>
           ) : (
             <>
