@@ -97,15 +97,8 @@ const ChannelPage = () => {
 
     if (newIsStreaming) {
       if (currentUser.followers) {
-        console.log("Going Live! Sending notifications to followers..." + currentUser.followers);
-        let followersList: string[] = [];
-        if (typeof currentUser.followers === 'string') {
-          followersList = JSON.parse(currentUser.followers);
-        } else {
-          followersList = currentUser.followers;
-        }
+        let followersList = typeof currentUser.followers === 'string' ? JSON.parse(currentUser.followers) : currentUser.followers;
         for (const followerEmail of followersList) {
-          console.log("Trying to get user with Follower Email: " + followerEmail);
           try {
             const { data: followerData, error } = await supabase
               .from('Users')
@@ -113,26 +106,19 @@ const ChannelPage = () => {
               .eq('email', followerEmail)
               .single();
 
-            if (error) {
-              console.error(`Error fetching follower data: ${error.message}`);
-              continue;
-            }
+            if (error) continue;
 
-            if (followerData.is_online) {
-              console.log(`User ${currentUser.email} is live, sending push notification to follower ${followerData.email}`);
-              new Notification(`${currentUser.username} is live!`);
-            } else {
-              console.log(`User ${currentUser.email} is live, sending email to follower ${followerData.email}`);
-              fetch('/api/sendEmail', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  email: followerData.email,
-                  subject: `${currentUser.username} is live!`,
-                  message: `${currentUser.username} is now live. Check it out!`,
-                }),
-              });
-            }
+            const { data, error: insertError } = await supabase
+              .from('notifications')
+              .insert([
+                {
+                  streamer: currentUser.username,
+                  user: followerData.email,
+                  sent: false,
+                },
+              ]);
+
+            if (insertError) console.error(`Error inserting notification: ${insertError.message}`);
           } catch (err) {
             console.error(`Error processing follower ${followerEmail}:`, err);
           }
@@ -222,7 +208,6 @@ const ChannelPage = () => {
                       onMouseOut={(e) => {
                         (e.currentTarget as HTMLElement).style.boxShadow = '0 0 10px 4px rgba(128, 0, 128, 0.7)';
                       }}
-                      
                     >
                       {isStreaming ? 'Stop Streaming' : 'Go Live'}
                     </button>

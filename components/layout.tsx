@@ -67,7 +67,7 @@ const Layout = ({ children }: LayoutProps) => {
               .in('email', followedEmails);
 
             if (followedUsersError) {
-              console.error(followedUsersError);
+              // console.error(followedUsersError);
             } else {
               setFollowedChannels(followedUsers);
             }
@@ -78,7 +78,7 @@ const Layout = ({ children }: LayoutProps) => {
               .not('email', 'in', followedEmails);
 
             if (recommendedError) {
-              console.error(recommendedError);
+              // console.error(recommendedError);
             } else {
               setRecommendedChannels(recommended);
             }
