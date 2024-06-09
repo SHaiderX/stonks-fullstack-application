@@ -1,4 +1,3 @@
-// components/FollowButton.tsx
 "use client";
 import { useState, useEffect } from 'react';
 import { followUser } from '../../../../lib/userProfile';
@@ -8,9 +7,10 @@ interface FollowButtonProps {
   currentUserEmail: string;
   targetUserEmail: string;
   showLoginModal: () => void;
+  onFollowStatusChange: () => void;  // Added this line
 }
 
-const FollowButton = ({ currentUserEmail, targetUserEmail, showLoginModal }: FollowButtonProps) => {
+const FollowButton = ({ currentUserEmail, targetUserEmail, showLoginModal, onFollowStatusChange }: FollowButtonProps) => {
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
 
   useEffect(() => {
@@ -46,6 +46,7 @@ const FollowButton = ({ currentUserEmail, targetUserEmail, showLoginModal }: Fol
 
     if (!response.error) {
       setIsFollowing(!isFollowing);
+      onFollowStatusChange();  // Call the callback function to notify the change
     }
   };
 

@@ -31,6 +31,7 @@ const ChannelPage = () => {
   const [newEmoteName, setNewEmoteName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [emotes, setEmotes] = useState<Emote[]>([]);
+  const [isFollowing, setIsFollowing] = useState<boolean>(false); // State to check if the user is following the channel
   const emoteButtonRef = useRef<HTMLButtonElement>(null); // Ref for the emote button
   const params = useParams();
   const isLoggedIn = useAuth();
@@ -71,13 +72,28 @@ const ChannelPage = () => {
           console.error(error);
         } else {
           setCurrentUser(data);
+          checkFollowingStatus(data.email);
         }
+      }
+    };
+
+    const checkFollowingStatus = async (currentUserEmail: string) => {
+      const { data, error } = await supabase
+        .from('Users')
+        .select('following')
+        .eq('email', currentUserEmail)
+        .single();
+
+      if (error) {
+        console.error(error);
+      } else {
+        setIsFollowing(data.following && data.following.includes(channelData.email));
       }
     };
 
     fetchChannelData();
     fetchCurrentUser();
-  }, [username]);
+  }, [username, channelData]);
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -253,6 +269,7 @@ const ChannelPage = () => {
                       currentUserEmail={currentUser ? currentUser.email : ''}
                       targetUserEmail={channelData ? channelData.email : ''}
                       showLoginModal={() => setIsSignInModalOpen(true)}
+                      onFollowStatusChange={() => setIsFollowing(!isFollowing)} // Update following status instantly
                     />
                   )}
                   {isSelf && (
@@ -317,22 +334,28 @@ const ChannelPage = () => {
                   {emotes.length === 0 ? (
                     <p className="text-gray-400">No channel emotes</p>
                   ) : (
-                    <div className="grid grid-cols-3 gap-2">
-                      {emotes.map((emote) => (
-                        <button key={emote.name} onClick={() => handleEmoteClick(emote)}>
-                          <img src={emote.url} alt={emote.name} className="w-8 h-8" /> {/* Make emotes bigger */}
-                        </button>
-                      ))}
-                    </div>
+                    <>
+                      {!isSelf && !isFollowing && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 text-white text-center p-4">
+                          Please follow the user to use the emotes.
+                        </div>
+                      )}
+                      <div className="grid grid-cols-3 gap-2">
+                        {emotes.map((emote) => (
+                          <button key={emote.name} onClick={() => handleEmoteClick(emote)} disabled={!isSelf && !isFollowing}>
+                            <img src={emote.url} alt={emote.name} className="w-8 h-8" /> {/* Make emotes bigger */}
+                          </button>
+                        ))}
+                      </div>
+                    </>
                   )}
-                  
                   {isSelf && (
-                  <button
-                    className="mt-2 text-blue-500"
-                    onClick={() => setIsAddEmoteModalOpen(true)}
-                  >
-                    + Add Emote
-                  </button>
+                    <button
+                      className="mt-2 text-blue-500"
+                      onClick={() => setIsAddEmoteModalOpen(true)}
+                    >
+                      + Add Emote
+                    </button>
                   )}
                 </div>
               )}
