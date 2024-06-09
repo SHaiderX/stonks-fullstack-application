@@ -1,4 +1,3 @@
-// components/ProfileCompletionModal.tsx
 "use client";
 import { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
@@ -10,15 +9,14 @@ interface ProfileCompletionModalProps {
 
 const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileCompletionModalProps) => {
   const [username, setUsername] = useState('');
-  const [profilePic, setProfilePic] = useState<File | null>(null);
+  const [profilePicUrl, setProfilePicUrl] = useState<string>('');
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [popupNotifications, setPopupNotifications] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleProfilePicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setProfilePic(e.target.files[0]);
-    }
+  const validateImageUrl = (url: string): boolean => {
+    const urlPattern = new RegExp('https?://.*\\.(?:png|jpg|jpeg|gif|bmp|webp)$', 'i');
+    return urlPattern.test(url);
   };
 
   const checkUsernameExists = async (username: string) => {
@@ -48,24 +46,13 @@ const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileComplet
       return;
     }
 
-    let profilePicUrl = 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png';
-    if (profilePic) {
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('profile-pics')
-        .upload(`public/${profilePic.name}`, profilePic);
-
-      if (uploadError) {
-        console.error(uploadError);
-        setErrorMessage('Failed to upload profile picture.');
-        return;
-      }
-
-      const { data: publicUrlData } = supabase.storage
-        .from('profile-pics')
-        .getPublicUrl(uploadData.path);
-      
-      profilePicUrl = publicUrlData.publicUrl;
+    if (profilePicUrl && !validateImageUrl(profilePicUrl)) {
+      setErrorMessage('Please provide a valid image URL.');
+      return;
     }
+
+    const defaultProfilePicUrl = 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png';
+    const finalProfilePicUrl = profilePicUrl || defaultProfilePicUrl;
 
     const { data: userData, error: userError } = await supabase
       .from('Users')
@@ -83,7 +70,7 @@ const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileComplet
       const { error: insertError } = await supabase.from('Users').insert({
         email: currentUserEmail,
         username,
-        profile_pic: profilePicUrl,
+        profile_pic: finalProfilePicUrl,
         notification_pref: {
           email: emailNotifications,
           popup: popupNotifications,
@@ -98,7 +85,7 @@ const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileComplet
       // User exists, update the user
       const { error: updateError } = await supabase.from('Users').update({
         username,
-        profile_pic: profilePicUrl,
+        profile_pic: finalProfilePicUrl,
         notification_pref: {
           email: emailNotifications,
           popup: popupNotifications,
@@ -127,7 +114,13 @@ const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileComplet
           onChange={(e) => setUsername(e.target.value)}
           required
         />
-        <input type="file" onChange={handleProfilePicUpload} className="mb-2 p-2 border rounded w-full" />
+        <input
+          type="text"
+          placeholder="Profile Picture URL (optional)"
+          className="mb-2 p-2 border rounded w-full"
+          value={profilePicUrl}
+          onChange={(e) => setProfilePicUrl(e.target.value)}
+        />
         <div className="mb-2">
           <label className="inline-flex items-center">
             <input

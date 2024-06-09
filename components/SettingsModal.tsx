@@ -1,4 +1,3 @@
-// components/SettingsModal.tsx
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
@@ -12,13 +11,14 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [popupNotifications, setPopupNotifications] = useState(false);
   const [streamUrl, setStreamUrl] = useState<string>('');
+  const [profilePicUrl, setProfilePicUrl] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
         .from('Users')
-        .select('notification_pref, stream_url')
+        .select('notification_pref, stream_url, profile_pic')
         .eq('email', currentUserEmail)
         .single();
 
@@ -29,6 +29,7 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
         setEmailNotifications(data.notification_pref.email);
         setPopupNotifications(data.notification_pref.popup);
         setStreamUrl(data.stream_url || '');
+        setProfilePicUrl(data.profile_pic || '');
       }
     };
 
@@ -40,9 +41,19 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
     return regex.test(url);
   };
 
+  const validateImageUrl = (url: string): boolean => {
+    const urlPattern = new RegExp('https?://.*\\.(?:png|jpg|jpeg|gif|bmp|webp)$', 'i');
+    return urlPattern.test(url);
+  };
+
   const handleSave = async () => {
     if (streamUrl && !validateYouTubeUrl(streamUrl)) {
       setErrorMessage('Invalid URL format. The URL must be in the format "https://www.youtube.com/watch?v=[ID]".');
+      return;
+    }
+
+    if (profilePicUrl && !validateImageUrl(profilePicUrl)) {
+      setErrorMessage('Please provide a valid image URL.');
       return;
     }
 
@@ -56,6 +67,7 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
           popup: popupNotifications,
         },
         stream_url: embedUrl,
+        profile_pic: profilePicUrl,
       })
       .eq('email', currentUserEmail);
 
@@ -102,6 +114,16 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
             value={streamUrl}
             onChange={(e) => setStreamUrl(e.target.value)}
             placeholder="https://www.youtube.com/watch?v=jfKfPfyJRdk"
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-white mb-2">Profile Picture URL (optional)</label>
+          <input
+            type="text"
+            className="w-full p-2 rounded bg-gray-700 text-white"
+            value={profilePicUrl}
+            onChange={(e) => setProfilePicUrl(e.target.value)}
+            placeholder="https://example.com/profile-pic.jpg"
           />
         </div>
         <button onClick={handleSave} className="px-4 py-2 bg-blue-500 text-white rounded">

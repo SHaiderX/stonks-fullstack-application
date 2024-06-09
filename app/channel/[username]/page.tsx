@@ -12,10 +12,6 @@ interface Emote {
   url: string;
 }
 
-interface Params {
-  username: string | string[];
-}
-
 interface User {
   username: string;
   email: string;
@@ -31,6 +27,7 @@ const ChannelPage = () => {
   const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
   const [isEmotesPopupOpen, setIsEmotesPopupOpen] = useState<boolean>(false);
   const [emotes, setEmotes] = useState<Emote[]>([]);
+  const emoteButtonRef = useRef<HTMLButtonElement>(null); // Ref for the emote button
   const params = useParams();
   const isLoggedIn = useAuth();
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -95,9 +92,22 @@ const ChannelPage = () => {
       .update({ is_live: newIsStreaming })
       .eq('username', currentUser.username);
 
+    // Re-fetch the current user to get updated followers
+    const { data: updatedUserData, error: fetchError } = await supabase
+      .from('Users')
+      .select('followers')
+      .eq('email', currentUser.email)
+      .single();
+
+    if (fetchError) {
+      console.error('Failed to fetch updated user data:', fetchError);
+      return;
+    }
+
+
     if (newIsStreaming) {
-      if (currentUser.followers) {
-        let followersList = typeof currentUser.followers === 'string' ? JSON.parse(currentUser.followers) : currentUser.followers;
+      if (updatedUserData.followers) {
+        let followersList = typeof updatedUserData.followers === 'string' ? JSON.parse(updatedUserData.followers) : updatedUserData.followers;
         for (const followerEmail of followersList) {
           try {
             const { data: followerData, error } = await supabase
@@ -145,6 +155,10 @@ const ChannelPage = () => {
 
   const handleChatMessage = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
+      if (!isLoggedIn) {
+        setIsSignInModalOpen(true);
+        return;
+      }
       setChatMessages([...chatMessages, { user: currentUser?.username || 'Unknown', message: (e.target as HTMLInputElement).value, isEmote: false }]);
       (e.target as HTMLInputElement).value = '';
     }
@@ -246,7 +260,7 @@ const ChannelPage = () => {
               ))}
               <div ref={chatEndRef}></div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center relative">
               <input
                 type="text"
                 placeholder="Type a message..."
@@ -254,27 +268,31 @@ const ChannelPage = () => {
                 onKeyDown={handleChatMessage}
               />
               <button
+                ref={emoteButtonRef}
                 className="px-2 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
                 onClick={() => setIsEmotesPopupOpen(!isEmotesPopupOpen)}
               >
                 😀
               </button>
+              {isEmotesPopupOpen && (
+                <div
+                  className="absolute bottom-12 right-0 bg-gray-800 p-4 rounded shadow-lg"
+                  style={{ width: '150px', zIndex: 10 }} // Adjust width as needed
+                >
+                  {emotes.length === 0 ? (
+                    <p className="text-gray-400">No channel emotes</p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {emotes.map((emote) => (
+                        <button key={emote.name} onClick={() => handleEmoteClick(emote)}>
+                          <img src={emote.url} alt={emote.name} className="w-8 h-8" /> {/* Make emotes bigger */}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            {isEmotesPopupOpen && (
-              <div className="absolute bottom-16 right-4 bg-gray-800 p-4 rounded shadow-lg">
-                {emotes.length === 0 ? (
-                  <p className="text-gray-400">No channel emotes</p>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2">
-                    {emotes.map((emote) => (
-                      <button key={emote.name} onClick={() => handleEmoteClick(emote)}>
-                        <img src={emote.url} alt={emote.name} className="w-4 h-4" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
       </div>
