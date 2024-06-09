@@ -12,11 +12,22 @@ interface Emote {
   url: string;
 }
 
+interface Params {
+  username: string | string[];
+}
+
+interface User {
+  username: string;
+  email: string;
+  is_live: boolean;
+  followers: string[];
+}
+
 const ChannelPage = () => {
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<{ user: string; message: string; isEmote: boolean }[]>([]);
   const [channelData, setChannelData] = useState<any>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
   const [isEmotesPopupOpen, setIsEmotesPopupOpen] = useState<boolean>(false);
   const [emotes, setEmotes] = useState<Emote[]>([]);
@@ -74,6 +85,8 @@ const ChannelPage = () => {
   }, [chatMessages]);
 
   const toggleStreaming = async () => {
+    if (!currentUser) return;
+
     const newIsStreaming = !isStreaming;
     setIsStreaming(newIsStreaming);
 
@@ -82,6 +95,51 @@ const ChannelPage = () => {
       .update({ is_live: newIsStreaming })
       .eq('username', currentUser.username);
 
+    if (newIsStreaming) {
+      if (currentUser.followers) {
+        console.log("Going Live! Sending notifications to followers..." + currentUser.followers);
+        let followersList: string[] = [];
+        if (typeof currentUser.followers === 'string') {
+          followersList = JSON.parse(currentUser.followers);
+        } else {
+          followersList = currentUser.followers;
+        }
+        for (const followerEmail of followersList) {
+          console.log("Trying to get user with Follower Email: " + followerEmail);
+          try {
+            const { data: followerData, error } = await supabase
+              .from('Users')
+              .select('email, is_online')
+              .eq('email', followerEmail)
+              .single();
+
+            if (error) {
+              console.error(`Error fetching follower data: ${error.message}`);
+              continue;
+            }
+
+            if (followerData.is_online) {
+              console.log(`User ${currentUser.email} is live, sending push notification to follower ${followerData.email}`);
+              new Notification(`${currentUser.username} is live!`);
+            } else {
+              console.log(`User ${currentUser.email} is live, sending email to follower ${followerData.email}`);
+              fetch('/api/sendEmail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  email: followerData.email,
+                  subject: `${currentUser.username} is live!`,
+                  message: `${currentUser.username} is now live. Check it out!`,
+                }),
+              });
+            }
+          } catch (err) {
+            console.error(`Error processing follower ${followerEmail}:`, err);
+          }
+        }
+      }
+    }
+
     if (error) {
       console.error('Failed to update streaming status:', error);
     }
@@ -89,13 +147,13 @@ const ChannelPage = () => {
 
   const handleChatMessage = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
-      setChatMessages([...chatMessages, { user: currentUser.username, message: (e.target as HTMLInputElement).value, isEmote: false }]);
+      setChatMessages([...chatMessages, { user: currentUser?.username || 'Unknown', message: (e.target as HTMLInputElement).value, isEmote: false }]);
       (e.target as HTMLInputElement).value = '';
     }
   };
 
   const handleEmoteClick = (emote: Emote) => {
-    setChatMessages([...chatMessages, { user: currentUser.username, message: emote.url, isEmote: true }]);
+    setChatMessages([...chatMessages, { user: currentUser?.username || 'Unknown', message: emote.url, isEmote: true }]);
     setIsEmotesPopupOpen(false);
   };
 
