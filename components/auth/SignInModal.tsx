@@ -34,9 +34,6 @@ const SignInModal = ({ closeModal }: SignInModalProps) => {
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
     if (error) {
       setErrorMessage(error.message);
-    } else {
-      closeModal();
-      window.location.reload();
     }
   };
 
@@ -50,6 +47,18 @@ const SignInModal = ({ closeModal }: SignInModalProps) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        window.location.reload();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
     };
   }, []);
 

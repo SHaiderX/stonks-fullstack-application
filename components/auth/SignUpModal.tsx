@@ -41,7 +41,6 @@ const SignUpModal = ({ closeModal }: SignUpModalProps) => {
       setErrorMessage(error.message);
     } else {
       closeModal();
-      window.location.reload();
     }
   };
 
