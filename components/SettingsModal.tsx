@@ -8,12 +8,14 @@ interface SettingsModalProps {
 }
 
 const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => {
+  // State variables for notification preferences, stream URL, profile picture URL, and error message
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [popupNotifications, setPopupNotifications] = useState(false);
   const [streamUrl, setStreamUrl] = useState<string>('');
   const [profilePicUrl, setProfilePicUrl] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Fetch user settings when the component mounts or currentUserEmail changes
   useEffect(() => {
     const fetchSettings = async () => {
       const { data, error } = await supabase
@@ -36,22 +38,27 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
     fetchSettings();
   }, [currentUserEmail]);
 
+  // Validate YouTube URL
   const validateYouTubeUrl = (url: string) => {
     const regex = /^(https:\/\/www\.youtube\.com\/(watch\?v=|embed\/))[a-zA-Z0-9_-]+$/;
     return regex.test(url);
   };
 
+  // Validate image URL
   const validateImageUrl = (url: string): boolean => {
     const urlPattern = new RegExp('https?://.*\\.(?:png|jpg|jpeg|gif|bmp|webp)$', 'i');
     return urlPattern.test(url);
   };
 
+  // Handle save button click
   const handleSave = async () => {
+    // Validate stream URL
     if (streamUrl && !validateYouTubeUrl(streamUrl)) {
       setErrorMessage('Invalid URL format. The URL must be in the format "https://www.youtube.com/watch?v=[ID]".');
       return;
     }
 
+    // Validate profile picture URL
     if (profilePicUrl && !validateImageUrl(profilePicUrl)) {
       setErrorMessage('Please provide a valid image URL.');
       return;
@@ -59,6 +66,7 @@ const SettingsModal = ({ closeModal, currentUserEmail }: SettingsModalProps) => 
 
     const embedUrl = streamUrl.replace('watch?v=', 'embed/');
 
+    // Update user settings in Supabase
     const { error } = await supabase
       .from('Users')
       .update({

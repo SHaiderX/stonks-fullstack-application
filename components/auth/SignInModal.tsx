@@ -1,4 +1,3 @@
-// components/auth/SignInModal.tsx
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,40 +8,44 @@ interface SignInModalProps {
 }
 
 const SignInModal = ({ closeModal }: SignInModalProps) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const [email, setEmail] = useState(''); // State to store the email input
+  const [password, setPassword] = useState(''); // State to store the password input
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // State to store error messages
+  const modalRef = useRef<HTMLDivElement>(null); // Ref for the modal to handle outside clicks
+  const router = useRouter(); // Router for navigation
 
+  // Function to handle sign-in with email and password
   const handleSignIn = async () => {
     setErrorMessage(null);
     if (!email || !password) {
-      setErrorMessage('Email and password are required');
+      setErrorMessage('Email and password are required'); // Show error if fields are empty
       return;
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error.message); // Show error if sign-in fails
     } else {
-      closeModal();
-      window.location.reload();
+      closeModal(); // Close modal on successful sign-in
+      window.location.reload(); // Reload the page
     }
   };
 
+  // Function to handle sign-in with Google
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
     if (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error.message); // Show error if sign-in fails
     }
   };
 
+  // Function to handle clicks outside the modal
   const handleClickOutside = (event: MouseEvent) => {
     if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-      closeModal();
+      closeModal(); // Close modal if click is outside of it
     }
   };
 
+  // Effect to add and clean up the event listener for outside clicks
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
@@ -50,17 +53,19 @@ const SignInModal = ({ closeModal }: SignInModalProps) => {
     };
   }, []);
 
+  // Effect to handle authentication state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
-        window.location.reload();
+        window.location.reload(); // Reload the page on sign-in
       }
     });
 
     return () => {
-      subscription.unsubscribe();
+      subscription.unsubscribe(); // Clean up the subscription on unmount
     };
   }, []);
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-20 bg-black bg-opacity-50">

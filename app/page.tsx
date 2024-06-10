@@ -13,39 +13,41 @@ interface Channel {
 }
 
 const HomePage = () => {
-  const [activeChannels, setActiveChannels] = useState<Channel[]>([]);
+  const [activeChannels, setActiveChannels] = useState<Channel[]>([]); // State to store the list of active channels
 
   useEffect(() => {
+    // Function to fetch active channels from the database
     const fetchActiveChannels = async () => {
       const { data, error } = await supabase
         .from('Users')
         .select('id, username, stream_url, profile_pic')
-        .eq('is_live', true);
+        .eq('is_live', true); // Fetch only users who are currently live
 
       if (error) {
-        console.error('Error fetching active channels:', error);
+        console.error('Error fetching active channels:', error); // Log any errors that occur during the fetch
         return;
       }
 
       if (data) {
+        // Map through the data to add thumbnails to each channel
         const channelsWithThumbnails = await Promise.all(
           data.map(async (channel) => {
-            const videoId = channel.stream_url.split('/embed/')[1];
-            const thumbnail = `https://img.youtube.com/vi/${videoId}/0.jpg`;
+            const videoId = channel.stream_url.split('/embed/')[1]; // Extract video ID from the stream URL
+            const thumbnail = `https://img.youtube.com/vi/${videoId}/0.jpg`; // Construct the thumbnail URL
 
             return {
               ...channel,
-              thumbnail,
+              thumbnail, // Add the thumbnail to the channel object
             };
           })
         );
 
-        setActiveChannels(channelsWithThumbnails);
+        setActiveChannels(channelsWithThumbnails); // Update the state with the channels including thumbnails
       }
     };
 
-    fetchActiveChannels();
-  }, []);
+    fetchActiveChannels(); // Call the function to fetch active channels
+  }, []); // Dependency array is empty, so this effect runs only once on mount
 
   return (
     <Layout>

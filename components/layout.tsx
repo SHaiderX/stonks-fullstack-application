@@ -22,21 +22,22 @@ interface Channel {
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const [search, setSearch] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false);
-  const [isSignUpModalOpen, setIsSignUpModalOpen] = useState<boolean>(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
-  const [currentUserUsername, setCurrentUserUsername] = useState<string | null>(null);
-  const [profilePicUrl, setProfilePicUrl] = useState<string>('');
-  const [followedChannels, setFollowedChannels] = useState<Channel[]>([]);
-  const [recommendedChannels, setRecommendedChannels] = useState<Channel[]>([]);
-  const isLoggedIn = useAuth();
-  const router = useRouter();
-  const modalRef = useRef<HTMLDivElement>(null);
+  const [search, setSearch] = useState(''); // State for the search input
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for the profile modal
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState<boolean>(false); // State for the sign-in modal
+  const [isSignUpModalOpen, setIsSignUpModalOpen] = useState<boolean>(false); // State for the sign-up modal
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false); // State for the profile completion modal
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false); // State for the settings modal
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null); // State for the current user's email
+  const [currentUserUsername, setCurrentUserUsername] = useState<string | null>(null); // State for the current user's username
+  const [profilePicUrl, setProfilePicUrl] = useState<string>(''); // State for the profile picture URL
+  const [followedChannels, setFollowedChannels] = useState<Channel[]>([]); // State for followed channels
+  const [recommendedChannels, setRecommendedChannels] = useState<Channel[]>([]); // State for recommended channels
+  const isLoggedIn = useAuth(); // Custom hook to check if the user is logged in
+  const router = useRouter(); // Next.js router for navigation
+  const modalRef = useRef<HTMLDivElement>(null); // Ref for the profile modal
 
+  // Effect to fetch user profile data and followed/recommended channels
   useEffect(() => {
     const checkUserProfile = async () => {
       const { data: userResponse } = await supabase.auth.getUser();
@@ -52,7 +53,7 @@ const Layout = ({ children }: LayoutProps) => {
 
         if (error) {
           console.error(error);
-          setIsProfileModalOpen(true);
+          setIsProfileModalOpen(true); // Open profile completion modal if there is an error
         } else {
           setProfilePicUrl(data?.profile_pic || 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png');
           setCurrentUserUsername(data?.username || '');
@@ -67,7 +68,7 @@ const Layout = ({ children }: LayoutProps) => {
               .in('email', followedEmails);
 
             if (followedUsersError) {
-              // console.error(followedUsersError);
+              console.error(followedUsersError);
             } else {
               setFollowedChannels(followedUsers);
             }
@@ -78,7 +79,7 @@ const Layout = ({ children }: LayoutProps) => {
               .not('email', 'in', followedEmails);
 
             if (recommendedError) {
-              // console.error(recommendedError);
+              console.error(recommendedError);
             } else {
               setRecommendedChannels(recommended);
             }
@@ -114,25 +115,30 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, [isLoggedIn]);
 
+  // Function to handle user sign-out
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setIsModalOpen(false);
     router.push('/');
   };
 
+  // Function to open settings modal
   const handleSettings = () => {
     setIsSettingsModalOpen(true);
     setIsModalOpen(false);
   };
 
+  // Function to open sign-in modal
   const handleLogin = () => {
     setIsSignInModalOpen(true);
   };
 
+  // Function to open sign-up modal
   const handleSignUp = () => {
     setIsSignUpModalOpen(true);
   };
 
+  // Function to navigate to the current user's profile
   const handleProfile = () => {
     if (currentUserUsername) {
       router.push(`/channel/${currentUserUsername}`);
@@ -140,6 +146,7 @@ const Layout = ({ children }: LayoutProps) => {
     }
   };
 
+  // Effect to handle clicks outside the profile modal to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {

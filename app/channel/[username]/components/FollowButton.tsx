@@ -7,16 +7,19 @@ interface FollowButtonProps {
   currentUserEmail: string;
   targetUserEmail: string;
   showLoginModal: () => void;
-  onFollowStatusChange: () => void;  // Added this line
+  onFollowStatusChange: () => void;  // Callback to notify parent component of follow status change
 }
 
 const FollowButton = ({ currentUserEmail, targetUserEmail, showLoginModal, onFollowStatusChange }: FollowButtonProps) => {
+  // State to track if the current user is following the target user
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
 
+  // Effect to check if the current user is already following the target user
   useEffect(() => {
     const checkFollowingStatus = async () => {
-      if (!currentUserEmail) return;
+      if (!currentUserEmail) return; // Exit if there's no current user email
 
+      // Query the 'Users' table to check the 'following' list of the current user
       const { data, error } = await supabase
         .from('Users')
         .select('following')
@@ -24,29 +27,32 @@ const FollowButton = ({ currentUserEmail, targetUserEmail, showLoginModal, onFol
         .single();
 
       if (error) {
-        console.error(error);
+        console.error(error); // Log any error
         return;
       }
 
+      // If the 'following' list includes the target user's email, set 'isFollowing' to true
       if (data && data.following && data.following.includes(targetUserEmail)) {
         setIsFollowing(true);
       }
     };
 
     checkFollowingStatus();
-  }, [currentUserEmail, targetUserEmail]);
+  }, [currentUserEmail, targetUserEmail]); // Re-run effect if currentUserEmail or targetUserEmail changes
 
+  // Handler for the follow/unfollow button click
   const handleFollow = async () => {
     if (!currentUserEmail) {
-      showLoginModal();
+      showLoginModal(); // Show login modal if the user is not logged in
       return;
     }
 
+    // Call followUser function to toggle follow status
     const response = await followUser(currentUserEmail, targetUserEmail);
 
     if (!response.error) {
-      setIsFollowing(!isFollowing);
-      onFollowStatusChange();  // Call the callback function to notify the change
+      setIsFollowing(!isFollowing); // Toggle the 'isFollowing' state
+      onFollowStatusChange();  // Notify parent component of follow status change
     }
   };
 

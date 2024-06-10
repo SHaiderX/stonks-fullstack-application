@@ -8,17 +8,20 @@ interface ProfileCompletionModalProps {
 }
 
 const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileCompletionModalProps) => {
+  // State variables for user input and error messages
   const [username, setUsername] = useState('');
   const [profilePicUrl, setProfilePicUrl] = useState<string>('');
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [popupNotifications, setPopupNotifications] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Function to validate image URL
   const validateImageUrl = (url: string): boolean => {
     const urlPattern = new RegExp('https?://.*\\.(?:png|jpg|jpeg|gif|bmp|webp)$', 'i');
     return urlPattern.test(url);
   };
 
+  // Function to check if the username already exists
   const checkUsernameExists = async (username: string) => {
     const { data, error } = await supabase
       .from('Users')
@@ -34,26 +37,31 @@ const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileComplet
     return data.length > 0;
   };
 
+  // Function to handle saving the profile
   const handleSave = async () => {
     if (!username) {
       setErrorMessage('Username is required.');
       return;
     }
 
+    // Check if the username already exists
     const usernameExists = await checkUsernameExists(username);
     if (usernameExists) {
       setErrorMessage('Username already exists. Please choose another one.');
       return;
     }
 
+    // Validate the profile picture URL if provided
     if (profilePicUrl && !validateImageUrl(profilePicUrl)) {
       setErrorMessage('Please provide a valid image URL.');
       return;
     }
 
+    // Set the default profile picture URL if not provided
     const defaultProfilePicUrl = 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png';
     const finalProfilePicUrl = profilePicUrl || defaultProfilePicUrl;
 
+    // Fetch user data from the database
     const { data: userData, error: userError } = await supabase
       .from('Users')
       .select('*')
@@ -65,8 +73,8 @@ const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileComplet
       return;
     }
 
+    // If the user does not exist, create a new user
     if (userData.length === 0) {
-      // User does not exist, create a new user
       const { error: insertError } = await supabase.from('Users').insert({
         email: currentUserEmail,
         username,
@@ -82,7 +90,7 @@ const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileComplet
         return;
       }
     } else {
-      // User exists, update the user
+      // If the user exists, update the user data
       const { error: updateError } = await supabase.from('Users').update({
         username,
         profile_pic: finalProfilePicUrl,
@@ -98,9 +106,11 @@ const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileComplet
       }
     }
 
+    // Close the modal and reload the page
     closeModal();
     window.location.reload();
   };
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-20 bg-black bg-opacity-50">

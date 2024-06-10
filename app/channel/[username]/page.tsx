@@ -20,6 +20,7 @@ interface User {
 }
 
 const ChannelPage = () => {
+  // State variables to manage various aspects of the channel page
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<{ user: string; message: string; isEmote: boolean }[]>([]);
   const [channelData, setChannelData] = useState<any>(null);
@@ -37,9 +38,10 @@ const ChannelPage = () => {
   const isLoggedIn = useAuth();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Ensure username is a string
+  // Ensure the username is a string
   const username = Array.isArray(params.username) ? params.username[0] : params.username;
 
+  // Fetch channel data and current user data when the component mounts or when the username or channelData changes
   useEffect(() => {
     const fetchChannelData = async () => {
       const { data, error } = await supabase
@@ -47,6 +49,7 @@ const ChannelPage = () => {
         .select('*')
         .ilike('username', username);
 
+      // Handle case where the channel does not exist
       if (error || data.length === 0) {
         setChannelData({ username: "doesn't exist", profile_pic: '' });
       } else {
@@ -56,6 +59,7 @@ const ChannelPage = () => {
       }
     };
 
+    // Fetch current user data from Supabase
     const fetchCurrentUser = async () => {
       const {
         data: { user },
@@ -77,6 +81,7 @@ const ChannelPage = () => {
       }
     };
 
+    // Check if the current user is following the channel
     const checkFollowingStatus = async (currentUserEmail: string) => {
       const { data, error } = await supabase
         .from('Users')
@@ -95,12 +100,14 @@ const ChannelPage = () => {
     fetchCurrentUser();
   }, [username, channelData]);
 
+  // Scroll chat to the bottom when chat messages update
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatMessages]);
 
+  // Toggle the streaming status and handle notifications for followers
   const toggleStreaming = async () => {
     if (!currentUser) return;
 
@@ -136,7 +143,8 @@ const ChannelPage = () => {
               .single();
             if (error) continue;
 
-            if (followerData.is_online && followerData.notification_pref.popup) { //If online and has allows popups, send push notification
+            // Send notifications based on follower's online status and notification preferences
+            if (followerData.is_online && followerData.notification_pref.popup) { // If online and allows popups, send push notification
               const { data, error: insertError } = await supabase
                 .from('notifications')
                 .insert([
@@ -148,7 +156,7 @@ const ChannelPage = () => {
                 ]);
 
               if (insertError) console.error(`Error inserting notification: ${insertError.message}`);
-            } else if (!followerData.is_online && followerData.notification_pref.email) { //If offline and allows email notifications, send email
+            } else if (!followerData.is_online && followerData.notification_pref.email) { // If offline and allows email notifications, send email
               console.log(`User ${currentUser.email} is live, sending email to follower ${followerData.email}`);
               fetch('/api/sendEmail', {
                 method: 'POST',
@@ -172,6 +180,7 @@ const ChannelPage = () => {
     }
   };
 
+  // Handle chat message input and add messages to the chat
   const handleChatMessage = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
       if (!isLoggedIn) {
@@ -183,16 +192,19 @@ const ChannelPage = () => {
     }
   };
 
+  // Handle click on emotes and add emote message to the chat
   const handleEmoteClick = (emote: Emote) => {
     setChatMessages([...chatMessages, { user: currentUser?.username || 'Unknown', message: emote.url, isEmote: true }]);
     setIsEmotesPopupOpen(false);
   };
 
+  // Validate if a URL is an image URL
   const validateImageUrl = (url: string): boolean => {
     const urlPattern = new RegExp('https?://.*\\.(?:png|jpg|jpeg|gif|bmp|webp)$', 'i');
     return urlPattern.test(url);
   };
 
+  // Handle adding a new emote
   const handleAddEmote = async () => {
     if (!validateImageUrl(newEmoteUrl)) {
       setErrorMessage('Please provide a valid image URL.');
@@ -220,6 +232,7 @@ const ChannelPage = () => {
     setErrorMessage(null);
   };
 
+  // Check if the current user is the channel owner
   const isSelf = currentUser && currentUser.username.toLowerCase() === username.toLowerCase();
   const streamUrl = channelData?.stream_url || "https://www.youtube.com/embed/jfKfPfyJRdk";
 
