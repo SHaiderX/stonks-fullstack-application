@@ -21,12 +21,17 @@ const SignUpModal = ({ closeModal }: SignUpModalProps) => {
       setErrorMessage('Email and password are required');
       return;
     }
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-      setErrorMessage(error.message);
+    const { error: signUpError } = await supabase.auth.signUp({ email, password });
+    if (signUpError) {
+      setErrorMessage(signUpError.message);
     } else {
-      closeModal();
-      router.push('/');
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        setErrorMessage(signInError.message);
+      } else {
+        closeModal();
+        window.location.reload();
+      }
     }
   };
 
@@ -34,6 +39,9 @@ const SignUpModal = ({ closeModal }: SignUpModalProps) => {
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
     if (error) {
       setErrorMessage(error.message);
+    } else {
+      closeModal();
+      window.location.reload();
     }
   };
 

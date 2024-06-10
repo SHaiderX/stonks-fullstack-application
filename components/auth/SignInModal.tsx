@@ -26,7 +26,7 @@ const SignInModal = ({ closeModal }: SignInModalProps) => {
       setErrorMessage(error.message);
     } else {
       closeModal();
-      router.push('/');
+      window.location.reload();
     }
   };
 
@@ -34,6 +34,9 @@ const SignInModal = ({ closeModal }: SignInModalProps) => {
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
     if (error) {
       setErrorMessage(error.message);
+    } else {
+      closeModal();
+      window.location.reload();
     }
   };
 

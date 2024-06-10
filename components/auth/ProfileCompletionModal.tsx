@@ -99,6 +99,7 @@ const ProfileCompletionModal = ({ closeModal, currentUserEmail }: ProfileComplet
     }
 
     closeModal();
+    window.location.reload();
   };
 
   return (
